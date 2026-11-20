@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0a0306">
+<title>Astra Games — кровавая коллекция</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#080205; --bg2:#150409; --blood:#8b0a18; --crimson:#e11d34; --ember:#ff5a3c;
+  --ink:#f7ebec; --dim:#a4888c; --line:rgba(255,70,100,.16);
+  --display:"Bebas Neue",Impact,sans-serif; --body:Inter,system-ui,sans-serif;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);
+  overflow-x:hidden;-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(900px 600px at 12% -10%,rgba(180,10,35,.38),transparent 60%),
+    radial-gradient(700px 500px at 88% 8%,rgba(255,70,50,.20),transparent 65%),
+    radial-gradient(1000px 700px at 50% 120%,rgba(120,4,24,.45),transparent 70%),
+    linear-gradient(180deg,#0a0205,#080205 40%,#0d0307);}
+body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.5;
+  background-image:repeating-linear-gradient(0deg,rgba(255,255,255,.022) 0 1px,transparent 1px 3px);}
+.wrap{position:relative;z-index:1;max-width:1240px;margin:0 auto;
+  padding:calc(18px + env(safe-area-inset-top)) 20px calc(40px + env(safe-area-inset-bottom))}
+
+/* header */
+header{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:12px}
+.mark{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;
+  background:linear-gradient(160deg,#ff2d4a,#6d0512);box-shadow:0 0 26px rgba(225,29,52,.55),inset 0 0 0 1px rgba(255,255,255,.16);
+  font:900 20px/1 var(--body);color:#fff}
+.brand h1{font-family:var(--display);font-size:30px;letter-spacing:2px;margin:0;line-height:1;
+  background:linear-gradient(180deg,#fff,#ff8a92 45%,#b4102a);
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+.brand small{display:block;font:600 10px/1.6 var(--body);letter-spacing:3px;color:var(--dim);text-transform:uppercase}
+.tools{display:flex;gap:8px;align-items:center}
+.ghost{font:600 12px/1 var(--body);letter-spacing:1px;color:var(--ink);background:rgba(255,255,255,.04);
+  border:1px solid var(--line);padding:10px 14px;border-radius:10px;cursor:pointer;transition:.18s;display:flex;gap:7px;align-items:center}
+.ghost:hover{background:rgba(225,29,52,.18);border-color:rgba(255,70,100,.5)}
+.ghost.on{background:rgba(225,29,52,.25);border-color:rgba(255,70,100,.65);color:#fff}
+
+/* hero */
+.hero{margin:46px 0 30px;max-width:720px}
+.hero .kicker{font:700 11px/1 var(--body);letter-spacing:5px;color:var(--crimson);text-transform:uppercase;margin-bottom:14px}
+.hero h2{font-family:var(--display);font-size:clamp(44px,9vw,86px);line-height:.88;margin:0 0 16px;letter-spacing:1px;
+  text-shadow:0 0 60px rgba(225,29,52,.35)}
+.hero h2 em{font-style:normal;color:var(--crimson)}
+.hero p{margin:0;font-size:15px;line-height:1.65;color:var(--dim);max-width:560px}
+.hero .cta{margin-top:24px;display:flex;gap:10px;flex-wrap:wrap}
+.play{padding:14px 26px;border:0;border-radius:12px;cursor:pointer;font:800 13px/1 var(--body);letter-spacing:2px;
+  color:#fff;text-transform:uppercase;background:linear-gradient(180deg,#ff2f4c,#a30a1f);
+  box-shadow:0 10px 30px rgba(200,10,40,.4),inset 0 1px 0 rgba(255,255,255,.25);transition:.18s}
+.play:hover{transform:translateY(-2px);box-shadow:0 14px 40px rgba(255,40,70,.5)}
+
+/* filters */
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 22px}
+.chip{font:600 12px/1 var(--body);padding:9px 15px;border-radius:999px;cursor:pointer;
+  border:1px solid var(--line);background:rgba(255,255,255,.03);color:var(--dim);transition:.16s}
+.chip:hover{color:#fff;border-color:rgba(255,70,100,.45)}
+.chip.on{background:rgba(225,29,52,.22);border-color:rgba(255,70,100,.7);color:#fff}
+
+/* grid */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:18px}
+.card{position:relative;border-radius:18px;overflow:hidden;cursor:pointer;
+  border:1px solid var(--line);background:#12060b;transition:transform .22s,box-shadow .22s,border-color .22s}
+.card:hover{transform:translateY(-6px);border-color:rgba(255,70,100,.55);
+  box-shadow:0 24px 50px -18px rgba(225,29,52,.55)}
+.thumb{position:relative;aspect-ratio:16/10;display:grid;place-items:center;overflow:hidden}
+.thumb .glyph{font-size:54px;filter:drop-shadow(0 6px 22px rgba(0,0,0,.6));transform:translateY(-4px);transition:.3s}
+.card:hover .glyph{transform:translateY(-8px) scale(1.08)}
+.thumb::after{content:"";position:absolute;inset:0;
+  background:radial-gradient(120% 90% at 50% 110%,rgba(6,1,3,.95),transparent 62%),
+             repeating-linear-gradient(0deg,rgba(0,0,0,.16) 0 2px,transparent 2px 4px)}
+.badge3d{position:absolute;top:12px;left:12px;z-index:2;font:800 10px/1 var(--body);letter-spacing:1.4px;
+  padding:6px 9px;border-radius:6px;background:rgba(8,2,5,.72);border:1px solid rgba(255,255,255,.2);backdrop-filter:blur(6px)}
+.body{padding:16px 17px 18px}
+.body h3{margin:0 0 6px;font-family:var(--display);font-size:23px;letter-spacing:1.2px}
+.body p{margin:0 0 13px;font-size:12.5px;line-height:1.55;color:var(--dim);min-height:38px}
+.tags{display:flex;gap:6px;flex-wrap:wrap}
+.tag{font:600 10px/1 var(--body);letter-spacing:.6px;padding:5px 9px;border-radius:5px;
+  background:rgba(255,70,100,.12);color:#ff9aa8;border:1px solid rgba(255,70,100,.2)}
+.card .go{position:absolute;right:14px;bottom:16px;font:800 10px/1 var(--body);letter-spacing:1.5px;
+  color:#ff4d68;opacity:0;transform:translateX(-6px);transition:.2s}
+.card:hover .go{opacity:1;transform:translateX(0)}
+
+/* fps meter */
+#fps{position:fixed;top:calc(10px + env(safe-area-inset-top));right:calc(12px + env(safe-area-inset-right));
+  z-index:60;font:700 11px/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.5px;
+  padding:7px 10px;border-radius:8px;background:rgba(6,1,3,.78);border:1px solid var(--line);
+  color:#8dffb0;pointer-events:none;display:none}
+#fps.show{display:block}
+#fps.mid{color:#ffd166} #fps.low{color:#ff5470}
+
+/* player */
+#player{position:fixed;inset:0;z-index:80;display:none;background:#050102;flex-direction:column}
+#player.on{display:flex}
+#player .bar{display:flex;align-items:center;gap:10px;padding:calc(8px + env(safe-area-inset-top)) 12px 8px;
+  background:rgba(10,3,6,.96);border-bottom:1px solid var(--line)}
+#player .bar b{font-family:var(--display);font-size:19px;letter-spacing:1.5px;flex:1}
+#player .bar a{font:600 11px/1 var(--body);color:var(--dim);text-decoration:none;padding:9px 11px;
+  border:1px solid var(--line);border-radius:8px}
+#player iframe{flex:1;width:100%;border:0;background:#000;display:block}
+
+/* settings modal */
+#settings{position:fixed;inset:0;z-index:100;display:none;place-items:center;background:rgba(4,1,2,.82);backdrop-filter:blur(8px);padding:20px}
+#settings.on{display:grid}
+.sheet{width:min(420px,100%);border-radius:18px;background:linear-gradient(170deg,#1a0710,#0c0306);
+  border:1px solid rgba(255,70,100,.28);padding:22px;box-shadow:0 30px 80px rgba(0,0,0,.7)}
+.sheet h4{margin:0 0 4px;font-family:var(--display);font-size:24px;letter-spacing:1.4px}
+.sheet .sub{font-size:12px;color:var(--dim);margin-bottom:18px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 0;border-top:1px solid rgba(255,255,255,.06)}
+.row label{font-size:13.5px}
+.row small{display:block;color:var(--dim);font-size:11px;margin-top:3px}
+.sw{width:46px;height:26px;border-radius:99px;background:rgba(255,255,255,.1);border:1px solid var(--line);
+  position:relative;cursor:pointer;transition:.2s;flex:none}
+.sw::after{content:"";position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;
+  background:#fff;transition:.2s}
+.sw.on{background:rgba(225,29,52,.85);border-color:rgba(255,70,100,.8)}
+.sw.on::after{transform:translateX(20px)}
+.sheet .close{margin-top:18px;width:100%;padding:13px;border-radius:11px;border:1px solid var(--line);
+  background:rgba(255,255,255,.05);color:#fff;font:700 12px/1 var(--body);letter-spacing:2px;cursor:pointer}
+footer{margin-top:48px;padding-top:20px;border-top:1px solid rgba(255,255,255,.06);
+  font-size:11.5px;color:#6d5459;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+@media(max-width:560px){
+  .grid{grid-template-columns:1fr}
+  .hero{margin-top:30px}
+  .hero h2{font-size:clamp(38px,13vw,58px)}
+  .brand h1{font-size:25px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <div class="mark">A</div>
+      <div>
+        <h1>Astra Games</h1>
+        <small>кровавая коллекция</small>
+      </div>
+    </div>
+    <div class="tools">
+      <button class="ghost" id="rnd">🎲 Случайная</button>
+      <button class="ghost" id="openSet">⚙ Настройки</button>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="kicker">6 игр · 3D и 2D · без установки</div>
+    <h2>Играй сразу.<br>Кровь <em>в комплекте</em>.</h2>
+    <p>Открытый город на закате, дрифт по неону, зомби на выживание, раннер, пазл и аркада.
+       Всё работает в браузере — на ноутбуке и на телефоне.</p>
+    <div class="cta">
+      <button class="play" id="ctaPlay">Начать играть</button>
+      <button class="ghost" id="ctaRnd">Мне повезёт</button>
+    </div>
+  </section>
+
+  <div class="filters" id="filters"></div>
+  <div class="grid" id="grid"></div>
+
+  <footer>
+    <span>Astra Games · Three.js + Canvas 2D</span>
+    <span id="fpsStatus">FPS-счётчик выключен</span>
+  </footer>
+</div>
+
+<div id="fps">-- FPS</div>
+
+<div id="player">
+  <div class="bar">
+    <button class="ghost" id="pClose">← Хаб</button>
+    <b id="pTitle">Игра</b>
+    <a id="pNew" target="_blank" rel="noopener">Открыть в новой вкладке</a>
+  </div>
+  <iframe id="pFrame" allow="fullscreen; autoplay; gamepad" allowfullscreen></iframe>
+</div>
+
+<div id="settings">
+  <div class="sheet">
+    <h4>Настройки</h4>
+    <div class="sub">Сохраняются на этом устройстве</div>
+    <div class="row">
+      <label>Счётчик FPS<small>Показывать частоту кадров поверх хаба и игр</small></label>
+      <div class="sw" id="swFps"></div>
+    </div>
+    <div class="row">
+      <label>Анимации интерфейса<small>Отключи, если устройство слабое</small></label>
+      <div class="sw" id="swAnim"></div>
+    </div>
+    <button class="close" id="closeSet">ГОТОВО</button>
+  </div>
+</div>
+
+<script>
+const GAMES = [
+  { id:'los-santos', title:'LOS SANTOS', glyph:'🌇', c1:'#ff6a2b', c2:'#3a0b3f',
+    desc:'Лоу-поли город на закате: угоняй машины, уходи от копов, гоняй по чекпоинтам.',
+    tags:['3D','Экшн','Открытый мир'], kind:'3D' },
+  { id:'neon-drift', title:'NEON DRIFT', glyph:'🏎', c1:'#ff2d6f', c2:'#1a0530',
+    desc:'Дрифт по ночному неону: держи занос, собирай чекпоинты, бей рекорд круга.',
+    tags:['2D','Гонки','Дрифт'], kind:'2D' },
+  { id:'dead-zone', title:'DEAD ZONE', glyph:'🧟', c1:'#b3122a', c2:'#0d0508',
+    desc:'Топ-даун выживание: волны зомби, автострельба по ближайшему, апгрейды.',
+    tags:['2D','Шутер','Выживание'], kind:'2D' },
+  { id:'crimson-run', title:'CRIMSON RUN', glyph:'🏃', c1:'#ff3b3b', c2:'#24041a',
+    desc:'Бесконечный раннер: прыжки, подкаты, ускорение и растущая скорость.',
+    tags:['2D','Аркада','Раннер'], kind:'2D' },
+  { id:'blood-2048', title:'BLOOD 2048', glyph:'🩸', c1:'#8b0a18', c2:'#180206',
+    desc:'Классическая 2048 в кровавых тонах. Собери плитку 2048 и не застрянь.',
+    tags:['2D','Пазл','Логика'], kind:'2D' },
+  { id:'pulse-break', title:'PULSE BREAK', glyph:'💥', c1:'#ff4d2e', c2:'#12021c',
+    desc:'Арканоид с ускорением: лови мяч, ломай блоки, не теряй жизни.',
+    tags:['2D','Аркада','Реакция'], kind:'2D' },
+];
+
+const LS = {
+  fps: localStorage.getItem('astra.fps') === '1',
+  anim: localStorage.getItem('astra.anim') !== '0',
+};
+const S = id => document.getElementById(id);
+let activeFilter = 'Все';
+
+/* ---------- FPS ---------- */
+const fpsEl = S('fps');
+let frames = 0, fpsT = performance.now(), curFps = 0;
+function tickFps() {
+  frames++;
+  const now = performance.now();
+  if (now - fpsT >= 500) {
+    curFps = Math.round(frames * 1000 / (now - fpsT));
+    frames = 0; fpsT = now;
+    if (LS.fps) {
+      fpsEl.textContent = curFps + ' FPS';
+      fpsEl.className = 'show ' + (curFps >= 50 ? '' : curFps >= 30 ? 'mid' : 'low');
+    }
+  }
+  requestAnimationFrame(tickFps);
+}
+requestAnimationFrame(tickFps);
+
+function applyFps() {
+  fpsEl.classList.toggle('show', LS.fps);
+  S('swFps').classList.toggle('on', LS.fps);
+  S('fpsStatus').textContent = LS.fps ? 'FPS-счётчик включён' : 'FPS-счётчик выключен';
+  document.body.style.setProperty('--anim', LS.anim ? '1' : '0');
+  if (!LS.anim) document.body.classList.add('noanim'); else document.body.classList.remove('noanim');
+}
+
+/* ---------- карточки ---------- */
+function render(f) {
+  const list = f === 'Все' ? GAMES : GAMES.filter(g => g.tags.includes(f) || g.kind === f);
+  S('grid').innerHTML = list.map(g => `
+    <article class="card" data-id="${g.id}">
+      <div class="thumb" style="background:radial-gradient(120% 120% at 20% 10%, ${g.c1}, ${g.c2} 70%)">
+        <span class="badge3d">${g.kind === '3D' ? 'WEBGL · 3D' : 'CANVAS · 2D'}</span>
+        <span class="glyph">${g.glyph}</span>
+      </div>
+      <div class="body">
+        <h3>${g.title}</h3>
+        <p>${g.desc}</p>
+        <div class="tags">${g.tags.map(t => `<span class="tag">${t}</span>`).join('')}</div>
+        <span class="go">ИГРАТЬ →</span>
+      </div>
+    </article>`).join('');
+  S('grid').querySelectorAll('.card').forEach(c =>
+    c.addEventListener('click', () => launch(c.dataset.id)));
+}
+
+const FILTERS = ['Все', '3D', '2D', 'Гонки', 'Шутер', 'Аркада', 'Пазл'];
+S('filters').innerHTML = FILTERS.map(f => `<button class="chip ${f === 'Все' ? 'on' : ''}" data-f="${f}">${f}</button>`).join('');
+S('filters').addEventListener('click', e => {
+  const b = e.target.closest('.chip'); if (!b) return;
+  activeFilter = b.dataset.f;
+  S('filters').querySelectorAll('.chip').forEach(c => c.classList.toggle('on', c === b));
+  render(activeFilter);
+});
+
+/* ---------- плеер ---------- */
+function launch(id) {
+  const g = GAMES.find(x => x.id === id); if (!g) return;
+  const url = 'games/' + id + '.html' + (LS.fps ? '?fps=1' : '');
+  S('pTitle').textContent = g.title;
+  S('pNew').href = url;
+  S('pFrame').src = url;
+  S('player').classList.add('on');
+  document.body.style.overflow = 'hidden';
+  history.pushState({ game: id }, '', '#' + id);
+}
+function closePlayer() {
+  S('player').classList.remove('on');
+  S('pFrame').src = 'about:blank';
+  document.body.style.overflow = '';
+  if (location.hash) history.pushState({}, '', location.pathname);
+}
+S('pClose').onclick = closePlayer;
+addEventListener('popstate', closePlayer);
+
+function randomGame() { launch(GAMES[Math.floor(Math.random() * GAMES.length)].id); }
+S('rnd').onclick = randomGame;
+S('ctaRnd').onclick = randomGame;
+S('ctaPlay').onclick = () => launch(GAMES[0].id);
+
+/* ---------- настройки ---------- */
+S('openSet').onclick = () => S('settings').classList.add('on');
+S('closeSet').onclick = () => S('settings').classList.remove('on');
+S('settings').addEventListener('click', e => { if (e.target.id === 'settings') S('settings').classList.remove('on'); });
+S('swFps').onclick = () => {
+  LS.fps = !LS.fps; localStorage.setItem('astra.fps', LS.fps ? '1' : '0'); applyFps();
+};
+S('swAnim').onclick = () => {
+  LS.anim = !LS.anim; localStorage.setItem('astra.anim', LS.anim ? '1' : '0'); applyFps();
+  S('swAnim').classList.toggle('on', LS.anim);
+};
+
+/* ---------- инициализация ---------- */
+S('swAnim').classList.toggle('on', LS.anim);
+applyFps();
+render('Все');
+if (location.hash) {
+  const id = location.hash.slice(1);
+  if (GAMES.some(g => g.id === id)) launch(id);
+}
+addEventListener('keydown', e => { if (e.key === 'Escape') { closePlayer(); S('settings').classList.remove('on'); } });
+</script>
+</body>
+</html>
