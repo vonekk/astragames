@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Crimson Run</title>
+<style>
+html,body{margin:0;height:100%;overflow:hidden;background:#12030a;touch-action:none;
+  font-family:system-ui,sans-serif;color:#fff;user-select:none}
+canvas{display:block;width:100%;height:100%}
+#ui{position:fixed;inset:0;pointer-events:none;padding:calc(14px + env(safe-area-inset-top)) 16px}
+#row{display:flex;justify-content:space-between;font:700 12px/1.5 system-ui;letter-spacing:1px}
+#row b{display:block;font-size:24px;color:#ff4d68}
+#msg{position:absolute;left:50%;top:42%;transform:translate(-50%,-50%);font:800 28px/1.3 system-ui;
+  text-align:center;opacity:0;transition:.3s}
+#msg.on{opacity:1}
+#fps{position:fixed;right:10px;bottom:10px;font:700 11px ui-monospace,monospace;color:#8dffb0;
+  background:rgba(0,0,0,.55);padding:5px 8px;border-radius:6px;display:none}
+</style></head><body>
+<canvas id="c"></canvas>
+<div id="ui"><div id="row">
+  <div>СЧЁТ<b id="s">0</b></div>
+  <div style="text-align:right">РЕКОРД<b id="b">0</b></div>
+</div></div>
+<div id="msg">ТАПНИ, ЧТОБЫ БЕЖАТЬ</div><div id="fps">-- FPS</div>
+<script>
+const cvs=document.getElementById('c'),x=cvs.getContext('2d'),S=id=>document.getElementById(id);
+const FPS_ON=new URLSearchParams(location.search).has('fps');
+if(FPS_ON)S('fps').style.display='block';
+let W,H,DPR;
+function resize(){DPR=Math.min(devicePixelRatio||1,2);W=innerWidth;H=innerHeight;
+  cvs.width=W*DPR;cvs.height=H*DPR;x.setTransform(DPR,0,0,DPR,0,0);}
+addEventListener('resize',resize);resize();
+
+const G=1400;
+const P={y:0,vy:0,onGround:true,slide:0};
+let obs=[],coins=[],speed=420,dist=0,score=0,alive=true,started=false,best=+(localStorage.getItem('cr.best')||0);
+const groundY=()=>H*0.78;
+
+function jump(){
+  if(!started){started=true;S('msg').classList.remove('on');return;}
+  if(!alive)return reset();
+  if(P.onGround){P.vy=-820;P.onGround=false;}
+}
+function slide(){
+  if(P.onGround)P.slide=.45;
+}
+addEventListener('keydown',e=>{
+  if(e.code==='Space'||e.code==='ArrowUp'||e.code==='KeyW'){e.preventDefault();jump();}
+  if(e.code==='ArrowDown'||e.code==='KeyS'){e.preventDefault();slide();}
+});
+cvs.addEventListener('pointerdown',jump);
+addEventListener('touchstart',e=>{if(e.touches.length>1)slide();},{passive:true});
+
+function reset(){alive=true;obs=[];coins=[];speed=420;dist=0;score=0;P.y=0;P.vy=0;P.onGround=true;P.slide=0;
+  S('msg').classList.remove('on');}
+function msg(t){S('msg').textContent=t;S('msg').classList.add('on');}
+
+let spawnT=0,last=performance.now(),acc=0,frames=0;
+function loop(now){
+  requestAnimationFrame(loop);
+  const dt=Math.min((now-last)/1000,.05);last=now;
+  if(FPS_ON){frames++;acc+=dt;if(acc>.5){S('fps').textContent=Math.round(frames/acc)+' FPS';frames=0;acc=0;}}
+
+  if(started&&alive){
+    dist+=speed*dt;speed=Math.min(1150,speed+16*dt);score=Math.floor(dist/10);
+    P.vy+=G*dt;P.y+=P.vy*dt;
+    if(P.y>=0){P.y=0;P.vy=0;P.onGround=true;}
+    if(P.slide>0)P.slide-=dt;
+
+    spawnT-=dt;
+    if(spawnT<=0){
+      spawnT=Math.max(.55,1.5-speed/1600);
+      const tall=Math.random()<.45;
+      obs.push({x:W+80,w:tall?46:76,h:tall?110:52,kind:tall?'tall':'low'});
+      if(Math.random()<.6)coins.push({x:W+200+Math.random()*200,y:-90-Math.random()*90,got:false});
+    }
+    for(let i=obs.length-1;i>=0;i--){
+      const o=obs[i];o.x-=speed*dt;
+      const px=W*0.22,ph=P.slide>0?52:96,pw=54;
+      const py=groundY()+P.y-(P.slide>0?52:96);
+      if(o.x<px+pw&&o.x+o.w>px&&py+ph>groundY()-o.h&&py<groundY()){
+        if(!(o.kind==='low'&&P.y<-20)){alive=false;msg('ПАДЕНИЕ · '+score);
+          if(score>best){best=score;localStorage.setItem('cr.best',best);}}
+      }
+      if(o.x<-200)obs.splice(i,1);
+    }
+    for(let i=coins.length-1;i>=0;i--){
+      const c=coins[i];c.x-=speed*dt;
+      if(Math.abs(c.x-W*0.22)<40&&Math.abs(c.y-(P.y-60))<70){score+=50;coins.splice(i,1);continue;}
+      if(c.x<-100)coins.splice(i,1);
+    }
+  }
+
+  /* фон */
+  const gd=x.createLinearGradient(0,0,0,H);
+  gd.addColorStop(0,'#1a0209');gd.addColorStop(.5,'#3d0512');gd.addColorStop(1,'#0a0206');
+  x.fillStyle=gd;x.fillRect(0,0,W,H);
+  /* параллакс-город */
+  for(let l=0;l<3;l++){
+    x.fillStyle=['rgba(60,8,20,.85)','rgba(90,10,28,.7)','rgba(140,18,40,.45)'][l];
+    const off=(dist*(0.06+l*0.09))%160;
+    for(let i=-1;i<W/80+2;i++){
+      const bx=i*80-off, bh=90+((i*37+l*53)%120);
+      x.fillRect(bx,groundY()-bh,58,bh);
+    }
+  }
+  /* земля */
+  x.fillStyle='#160309';x.fillRect(0,groundY(),W,H);
+  x.strokeStyle='#ff2d55';x.globalAlpha=.4;x.lineWidth=3;
+  x.beginPath();x.moveTo(0,groundY());x.lineTo(W,groundY());x.stroke();x.globalAlpha=1;
+
+  /* монеты */
+  for(const c of coins){
+    x.fillStyle='#ffd23f';x.beginPath();x.arc(c.x,groundY()+c.y,11,0,7);x.fill();
+  }
+  /* препятствия */
+  for(const o of obs){
+    x.fillStyle='#ff2d55';x.shadowColor='#ff2d55';x.shadowBlur=22;
+    x.fillRect(o.x,groundY()-o.h,o.w,o.h);x.shadowBlur=0;
+  }
+  /* игрок */
+  if(!alive){x.globalAlpha=.4;}
+  const py=groundY()+P.y-(P.slide>0?52:96);
+  x.fillStyle='#f4eaea';x.fillRect(W*0.22,py,38,P.slide>0?52:96);
+  x.fillStyle='#ff2d55';x.fillRect(W*0.22,py,38,26);
+  x.globalAlpha=1;
+
+  S('s').textContent=score;S('b').textContent=best;
+  if(!started)msg('ТАПНИ, ЧТОБЫ БЕЖАТЬ');
+}
+requestAnimationFrame(loop);
+</script></body></html>

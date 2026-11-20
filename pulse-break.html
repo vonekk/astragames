@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Pulse Break</title>
+<style>
+html,body{margin:0;height:100%;overflow:hidden;background:#0b0207;touch-action:none;
+  font-family:system-ui,sans-serif;color:#fff;user-select:none}
+canvas{display:block;width:100%;height:100%}
+#ui{position:fixed;inset:0;pointer-events:none;padding:calc(12px + env(safe-area-inset-top)) 16px}
+#row{display:flex;justify-content:space-between;font:700 11px/1.5 system-ui;letter-spacing:1.5px;color:#a0888c}
+#row b{display:block;font-size:22px;color:#ff4d68}
+#msg{position:absolute;left:50%;top:38%;transform:translate(-50%,-50%);font:800 24px/1.3 system-ui;
+  text-align:center;opacity:0;transition:.3s;max-width:80vw}
+#msg.on{opacity:1}
+#fps{position:fixed;right:10px;bottom:10px;font:700 11px ui-monospace,monospace;color:#8dffb0;
+  background:rgba(0,0,0,.55);padding:5px 8px;border-radius:6px;display:none}
+</style></head><body>
+<canvas id="c"></canvas>
+<div id="ui"><div id="row">
+  <div>ОЧКИ<b id="s">0</b></div>
+  <div style="text-align:center">ЖИЗНИ<b id="l">3</b></div>
+  <div style="text-align:right">УРОВЕНЬ<b id="v">1</b></div>
+</div></div>
+<div id="msg"></div><div id="fps">-- FPS</div>
+<script>
+const cvs=document.getElementById('c'),x=cvs.getContext('2d'),S=id=>document.getElementById(id);
+const FPS_ON=new URLSearchParams(location.search).has('fps');
+if(FPS_ON)S('fps').style.display='block';
+
+let W,H,DPR;
+function resize(){
+  DPR=Math.min(devicePixelRatio||1,2);W=innerWidth;H=innerHeight;
+  cvs.width=W*DPR;cvs.height=H*DPR;x.setTransform(DPR,0,0,DPR,0,0);
+  pad.y=H-46-pad.h;
+  if(pad.w)pad.x=Math.min(pad.x,W-pad.w);
+}
+addEventListener('resize',resize);
+
+const pad={x:0,w:0,y:0,h:14};
+const ball={x:0,y:0,vx:0,vy:0,r:8};
+let bricks=[],score=0,lives=3,level=1,running=false,over=false,hintUp=false;
+const COLS=7,ROWS=5;
+
+function resetBall(){
+  ball.x=W/2;ball.y=H*0.72;
+  const sp=340+level*30;
+  ball.vx=(Math.random()<.5?-1:1)*sp*.6;
+  ball.vy=-Math.abs(sp);
+  running=false;hintUp=false;
+}
+
+function buildLevel(){
+  bricks=[];
+  const gx=14,top=H*0.16;
+  const bw=(W-gx*(COLS+1))/COLS,bh=Math.min(34,H*0.045);
+  for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){
+    if((r+c)%7===6)continue;
+    bricks.push({x:gx+c*(bw+gx),y:top+r*(bh+9),w:bw,h:bh,hp:1+Math.floor(r/2),col:r});
+  }
+  pad.w=Math.max(90,W*0.22);pad.h=14;pad.y=H-46-pad.h;
+  pad.x=(W-pad.w)/2;
+  resetBall();
+}
+
+function msg(t,ms=1400){
+  const el=S('msg');el.textContent=t;el.classList.add('on');
+  clearTimeout(msg._t);
+  msg._t=setTimeout(()=>el.classList.remove('on'),ms);
+}
+
+function point(e){
+  const r=cvs.getBoundingClientRect();
+  pad.x=Math.max(0,Math.min(W-pad.w,e.clientX-r.left-pad.w/2));
+  if(!running&&!over){running=true;S('msg').classList.remove('on');}
+}
+cvs.addEventListener('pointermove',point);
+cvs.addEventListener('pointerdown',point);
+addEventListener('keydown',e=>{
+  if(e.code==='ArrowLeft'||e.code==='KeyA')pad.x-=46;
+  if(e.code==='ArrowRight'||e.code==='KeyD')pad.x+=46;
+  pad.x=Math.max(0,Math.min(W-pad.w,pad.x));
+  if(e.code==='Space'&&!running&&!over){running=true;S('msg').classList.remove('on');}
+});
+
+/* один блок за подшаг, выталкивание по минимальному перекрытию */
+function collideBricks(){
+  for(let i=bricks.length-1;i>=0;i--){
+    const b=bricks[i];
+    if(ball.x+ball.r>b.x && ball.x-ball.r<b.x+b.w &&
+       ball.y+ball.r>b.y && ball.y-ball.r<b.y+b.h){
+      const oL=ball.x+ball.r-b.x, oR=b.x+b.w-(ball.x-ball.r);
+      const oT=ball.y+ball.r-b.y, oB=b.y+b.h-(ball.y-ball.r);
+      const m=Math.min(oL,oR,oT,oB);
+      if(m===oL){ball.x=b.x-ball.r;ball.vx=-Math.abs(ball.vx);}
+      else if(m===oR){ball.x=b.x+b.w+ball.r;ball.vx=Math.abs(ball.vx);}
+      else if(m===oT){ball.y=b.y-ball.r;ball.vy=-Math.abs(ball.vy);}
+      else{ball.y=b.y+b.h+ball.r;ball.vy=Math.abs(ball.vy);}
+      b.hp--;score+=10;
+      if(b.hp<=0)bricks.splice(i,1);
+      return;
+    }
+  }
+}
+
+function stepBall(dt){
+  const speed=Math.hypot(ball.vx,ball.vy);
+  const sub=Math.min(12,Math.max(1,Math.ceil(speed*dt/(ball.r*0.5))));
+  const h=dt/sub;
+  for(let s=0;s<sub;s++){
+    ball.x+=ball.vx*h;ball.y+=ball.vy*h;
+    if(ball.x<ball.r){ball.x=ball.r;ball.vx=Math.abs(ball.vx);}
+    if(ball.x>W-ball.r){ball.x=W-ball.r;ball.vx=-Math.abs(ball.vx);}
+    if(ball.y<ball.r+8){ball.y=ball.r+8;ball.vy=Math.abs(ball.vy);}
+    if(ball.vy>0 && ball.y>pad.y-ball.r && ball.y<pad.y+pad.h+ball.r &&
+       ball.x>pad.x-ball.r && ball.x<pad.x+pad.w+ball.r){
+      ball.y=pad.y-ball.r;
+      const hit=Math.max(-1,Math.min(1,(ball.x-(pad.x+pad.w/2))/(pad.w/2)));
+      const sp=Math.min(760,speed*1.02);
+      ball.vx=hit*sp*0.8;
+      ball.vy=-Math.sqrt(Math.max(1,sp*sp-ball.vx*ball.vx));
+    }
+    collideBricks();
+    if(ball.y>H+40)break;
+  }
+}
+
+let last=performance.now(),acc=0,frames=0;
+function loop(now){
+  requestAnimationFrame(loop);
+  const dt=Math.min((now-last)/1000,.05);last=now;
+  if(FPS_ON){frames++;acc+=dt;if(acc>.5){S('fps').textContent=Math.round(frames/acc)+' FPS';frames=0;acc=0;}}
+
+  if(running&&!over){
+    stepBall(dt);
+    if(ball.y>H+40){
+      lives--;
+      if(lives<=0){
+        over=true;msg('КОНЕЦ · ОЧКИ '+score,4000);
+        setTimeout(()=>{lives=3;score=0;level=1;over=false;buildLevel();},4200);
+      }else{
+        resetBall();msg('МЯЧ ПОТЕРЯН',900);
+      }
+    }
+    if(!bricks.length){level++;score+=100;buildLevel();msg('УРОВЕНЬ '+level);}
+  }
+
+  x.fillStyle='#0b0207';x.fillRect(0,0,W,H);
+  const gd=x.createLinearGradient(0,0,0,H);
+  gd.addColorStop(0,'rgba(255,45,85,.09)');gd.addColorStop(1,'rgba(0,0,0,0)');
+  x.fillStyle=gd;x.fillRect(0,0,W,H);
+
+  const PAL=['#8b0a18','#a30f1f','#c1121f','#e11d34','#ff4d3d'];
+  for(const b of bricks){
+    x.fillStyle=PAL[b.col%PAL.length];
+    x.shadowColor='#ff2d55';x.shadowBlur=14;
+    x.beginPath();x.roundRect(b.x,b.y,b.w,b.h,6);x.fill();
+    x.shadowBlur=0;
+    if(b.hp>1){x.fillStyle='rgba(255,255,255,.3)';x.fillRect(b.x+4,b.y+b.h-4,b.w-8,2);}
+  }
+
+  x.fillStyle='#fff';x.shadowColor='#ff2d55';x.shadowBlur=24;
+  x.beginPath();x.arc(ball.x,ball.y,ball.r,0,Math.PI*2);x.fill();
+  x.shadowBlur=0;
+
+  const pg=x.createLinearGradient(pad.x,0,pad.x+pad.w,0);
+  pg.addColorStop(0,'#ff2d55');pg.addColorStop(1,'#ff8a3c');
+  x.fillStyle=pg;x.beginPath();x.roundRect(pad.x,pad.y,pad.w,pad.h,7);x.fill();
+
+  if(!running&&!over&&!hintUp){hintUp=true;msg('ТАПНИ ИЛИ ПРОБЕЛ, ЧТОБЫ ЗАПУСТИТЬ',5000);}
+
+  S('s').textContent=score;S('l').textContent=Math.max(0,lives);S('v').textContent=level;
+}
+
+resize();
+buildLevel();
+requestAnimationFrame(loop);
+</script></body></html>

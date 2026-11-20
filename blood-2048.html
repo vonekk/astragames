@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Blood 2048</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#0c0206;color:#fff;font-family:system-ui,sans-serif;
+  touch-action:none;user-select:none;-webkit-user-select:none;overflow:hidden}
+#wrap{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;
+  padding:calc(16px + env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom))}
+#head{width:100%;max-width:460px;display:flex;justify-content:space-between;align-items:center}
+h1{margin:0;font-size:26px;letter-spacing:2px;color:#ff2d55}
+#scores{text-align:right;font-size:11px;letter-spacing:1px;color:#a0888c}
+#scores b{display:block;font-size:20px;color:#fff}
+#board{position:relative;width:100%;max-width:460px;aspect-ratio:1;background:#1a0308;
+  border:1px solid rgba(255,60,90,.25);border-radius:14px;padding:10px;
+  display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(4,1fr);gap:8px}
+.cell{border-radius:9px;display:grid;place-items:center;font-weight:800;
+  font-size:clamp(16px,5vw,30px);transition:transform .1s;background:rgba(255,255,255,.04)}
+.t2{background:#3a1018;color:#f0d0d4}.t4{background:#4a1220}
+.t8{background:#6d0f22}.t16{background:#8b0a18}
+.t32{background:#a30f1f}.t64{background:#bf1226}
+.t128{background:#d81b32;font-size:clamp(14px,4.2vw,26px)}
+.t256{background:#e83a45}.t512{background:#f25c50}
+.t1024{background:#ff7a4d;color:#2a0508}.t2048{background:#ffd23f;color:#2a0508;
+  box-shadow:0 0 30px rgba(255,210,63,.7)}
+#bar{width:100%;max-width:460px;display:flex;gap:10px}
+button{flex:1;padding:13px;border-radius:11px;border:1px solid rgba(255,60,90,.3);
+  background:rgba(255,60,90,.12);color:#fff;font:700 12px/1 system-ui;letter-spacing:2px;cursor:pointer}
+button:hover{background:rgba(255,60,90,.24)}
+#over{position:fixed;inset:0;display:none;place-items:center;background:rgba(8,1,4,.85);backdrop-filter:blur(6px)}
+#over.on{display:grid}
+#over div{text-align:center;font-size:24px;font-weight:800;letter-spacing:2px}
+#fps{position:fixed;right:10px;bottom:10px;font:700 11px ui-monospace,monospace;color:#8dffb0;
+  background:rgba(0,0,0,.55);padding:5px 8px;border-radius:6px;display:none}
+</style></head><body>
+<div id="wrap">
+  <div id="head">
+    <h1>BLOOD 2048</h1>
+    <div id="scores">СЧЁТ<b id="sc">0</b></div>
+  </div>
+  <div id="board"></div>
+  <div id="bar"><button id="undo">ОТМЕНА</button><button id="new">ЗАНОВО</button></div>
+</div>
+<div id="over"><div>НЕТ ХОДОВ<br><span id="osc" style="font-size:15px;color:#a0888c"></span></div></div>
+<div id="fps">-- FPS</div>
+<script>
+const S=id=>document.getElementById(id);
+const FPS_ON=new URLSearchParams(location.search).has('fps');
+if(FPS_ON)S('fps').style.display='block';
+
+let g,score=0,prev=null,dead=false;
+function empty(){return Array.from({length:4},()=>[0,0,0,0]);}
+function addTile(){
+  const free=[];g.forEach((r,i)=>r.forEach((v,j)=>{if(!v)free.push([i,j]);}));
+  if(!free.length)return;
+  const [i,j]=free[Math.floor(Math.random()*free.length)];
+  g[i][j]=Math.random()<.9?2:4;
+}
+function render(){
+  const b=S('board');b.innerHTML='';
+  g.forEach(r=>r.forEach(v=>{
+    const d=document.createElement('div');
+    d.className='cell'+(v?' t'+v:'');
+    d.textContent=v||'';
+    b.appendChild(d);
+  }));
+  S('sc').textContent=score;
+}
+function clone(){return g.map(r=>r.slice());}
+
+function move(dir){
+  if(dead)return;
+  const old=JSON.stringify(g);
+  prev=clone();
+  const n=4;
+  const get=(i,j)=>g[i][j];
+  for(let s=0;s<n;s++){
+    const line=[];
+    for(let k=0;k<n;k++){
+      let i,j;
+      if(dir==='left'){i=s;j=k;}
+      else if(dir==='right'){i=s;j=n-1-k;}
+      else if(dir==='up'){i=k;j=s;}
+      else{i=n-1-k;j=s;}
+      line.push(get(i,j));
+    }
+    const vals=line.filter(v=>v);
+    const out=[];
+    for(let k=0;k<vals.length;k++){
+      if(vals[k]===vals[k+1]){out.push(vals[k]*2);score+=vals[k]*2;k++;}
+      else out.push(vals[k]);
+    }
+    while(out.length<n)out.push(0);
+    for(let k=0;k<n;k++){
+      let i,j;
+      if(dir==='left'){i=s;j=k;}
+      else if(dir==='right'){i=s;j=n-1-k;}
+      else if(dir==='up'){i=k;j=s;}
+      else{i=n-1-k;j=s;}
+      g[i][j]=out[k];
+    }
+  }
+  if(JSON.stringify(g)!==old){addTile();render();check();}
+}
+function check(){
+  if(g.flat().includes(2048)){/* победа, но играем дальше */}
+  if(g.flat().some(v=>!v))return;
+  for(let i=0;i<4;i++)for(let j=0;j<4;j++){
+    if(j<3&&g[i][j]===g[i][j+1])return;
+    if(i<3&&g[i][j]===g[i+1][j])return;
+  }
+  dead=true;S('osc').textContent='СЧЁТ '+score;S('over').classList.add('on');
+}
+function reset(){g=empty();score=0;dead=false;prev=null;addTile();addTile();render();S('over').classList.remove('on');}
+
+addEventListener('keydown',e=>{
+  const m={ArrowLeft:'left',ArrowRight:'right',ArrowUp:'up',ArrowDown:'down',
+    KeyA:'left',KeyD:'right',KeyW:'up',KeyS:'down'}[e.code];
+  if(m){e.preventDefault();move(m);}
+});
+/* свайпы */
+let sx=0,sy=0,sw=false;
+S('board').addEventListener('pointerdown',e=>{sx=e.clientX;sy=e.clientY;sw=true;});
+addEventListener('pointerup',e=>{
+  if(!sw)return;sw=false;
+  const dx=e.clientX-sx,dy=e.clientY-sy;
+  if(Math.hypot(dx,dy)<24)return;
+  move(Math.abs(dx)>Math.abs(dy)?(dx>0?'right':'left'):(dy>0?'down':'up'));
+});
+S('new').onclick=reset;
+S('undo').onclick=()=>{if(prev){g=prev;prev=null;render();}};
+
+let acc=0,frames=0,last=performance.now();
+if(FPS_ON){
+  (function f(now){requestAnimationFrame(f);
+    const dt=(now-last)/1000;last=now;frames++;acc+=dt;
+    if(acc>.5){S('fps').textContent=Math.round(frames/acc)+' FPS';frames=0;acc=0;}})(performance.now());
+}
+reset();
+</script></body></html>
